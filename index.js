@@ -1,4 +1,4 @@
-const url = "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf";
+const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample.pdf";
 let pdfDoc = null,
     eventsJSON = null,
     pageNum = 1,
