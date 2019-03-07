@@ -1,12 +1,10 @@
 const url = "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf";
-
 let pdfDoc = null,
     eventsJSON = null,
     pageNum = 1,
     pageIsRendering = false,
     pageNumIsPending = null;
-
-let totalPages,
+    totalPages = null,
     canvas = document.getElementById("pdf_canvas"),
     context = canvas.getContext("2d");
 
@@ -119,7 +117,7 @@ function createJSON() {
   eventsJSON = new Object();
   eventsJSON.documentopen = getCurrentTimestamp();
   eventsJSON.events = [];
-  updateEvents();
+  updateEvents("load");
 }
 
 // Button event previous and next page
