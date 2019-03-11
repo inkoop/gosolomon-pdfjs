@@ -17,8 +17,12 @@
       <button id="download_button">Download</button>
     </div>
     <div id="wrapper">
-      <canvas id="pdf_canvas"></canvas>
+      <canvas id="canvas" style="border:1px solid black;"></canvas>
+      <div id="text_layer" class="textLayer"></div>
     </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="ui_utils.js"></script>
+    <script type="text/javascript" src="text_layer_builder.js"></script>
     <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
     <script src="./index.js"></script>
   </body>

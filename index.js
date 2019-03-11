@@ -5,33 +5,41 @@ let pdfDoc = null,
     pageIsRendering = false,
     pageNumIsPending = null;
     totalPages = null,
-    canvas = document.getElementById("pdf_canvas"),
-    context = canvas.getContext("2d");
+    canvas = $('#canvas')[0],
+    textLayer = $("#text_layer");
 
 showPDF(url);
 
 // Render the page
-const renderPage = num => {
+const renderPage = page => {
   pageIsRendering = true;
-  // Get the page
-  pdfDoc.getPage(num).then(page => {
-    // Set scale
-    let viewport = page.getViewport(2);
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    const renderCtx = {
-      canvasContext : context,
-      viewport : viewport,
-    };
-    page.render(renderCtx).promise.then(() => {
-      pageIsRendering = false;
-      if(pageNumIsPending !== null){
-        renderPage(pageNumIsPending);
-        pageNumIsPending = null;
-      }
+  $('#page_number').text(pageNum);
+  var scale = 1.5;
+  var viewport = page.getViewport(scale);
+  var context = canvas.getContext('2d');
+  canvas.height = viewport.height;
+  canvas.width = viewport.width;
+  //Draw it on the canvas
+  page.render({ canvasContext: context, viewport: viewport });
+
+  var canvasOffset = $(canvas).offset();
+  $(textLayer).addClass("textLayer");
+  var textLayerDiv = $(textLayer).css({
+    height : viewport.height+'px',
+    width : viewport.width+'px',
+    top : canvasOffset.top - 94,
+    left : canvasOffset.left
+  });
+
+  page.getTextContent().then(function(textContent){
+    var textLayer = new TextLayerBuilder({
+      textLayerDiv : textLayerDiv.get(0),
+      pageIndex : pageNum - 1,
+      viewport : viewport
     });
-    // Output current page
-    document.querySelector('#page_number').textContent = num; 
+    textLayer.setTextContent(textContent);
+    textLayer.render();
+    pageIsRendering = false;
   });
 };
 
@@ -40,7 +48,7 @@ const queueRenderPage = num => {
   if(pageIsRendering) {
     pageNumIsPending = num;
   } else {
-    renderPage(num);
+    thePDF.getPage( pageNum ).then( renderPage );
   }
 };
 
@@ -56,7 +64,7 @@ const showPreviousPage = () => {
 
 // Show next page
 const showNextPage = () => {
-  if(pageNum >= pdfDoc.numPages) {
+  if(pageNum >= thePDF.numPages) {
     return;
   }
   pageNum++;
@@ -66,14 +74,17 @@ const showNextPage = () => {
 
 // Get the Document and load the PDF
 function showPDF(pdf_url) {
-  pdfjsLib.getDocument({ url: pdf_url }).then(function(pdf_doc) {
-    pdfDoc = pdf_doc;
+  pdfjsLib.getDocument(url).then(function(pdf) {
+    // Set PDFJS global object (so we can easily access in our page functions
+    thePDF = pdf;
+    // How many pages it has
+    numPages = pdf.numPages;
+    $('#total_page_count').text(pdf.numPages);
     createJSON();
-    totalPages = pdfDoc.numPages;
-    document.querySelector('#total_page_count').textContent = pdfDoc.numPages;
-    // Show the first page of PDF
-    renderPage(pageNum);
-  }).catch(function(error) {
+    // Render first page
+    pdf.getPage( 1 ).then( renderPage );
+  })
+  .catch(function(error) {
     // Error reason
     console.log(error.message);
   });
@@ -82,7 +93,7 @@ function showPDF(pdf_url) {
 // Download page
 function exportPDF() { 
   let mime_types = [ 'application/pdf' ];
-  let download_link = document.createElement('a');
+  let download_link = $('<a>')[0];
   if ('download' in download_link) {
     download_link.download = "test.pdf";
   }
@@ -105,7 +116,7 @@ function updateEvents(event) {
   console.log(JSON.stringify(eventsJSON));
 }
 
-// Get timestamp
+// Get current timestamp
 function getCurrentTimestamp() {
   let now = new Date();
   let now_utc = now.valueOf();
@@ -121,7 +132,7 @@ function createJSON() {
 }
 
 // Button event previous and next page
-document.getElementById("previous_page").addEventListener("click", showPreviousPage);
-document.getElementById("next_page").addEventListener("click", showNextPage);
+$("#previous_page").on("click", showPreviousPage);
+$("#next_page").on("click", showNextPage);
 // Button event download
-document.getElementById("download_button").addEventListener("click", exportPDF);
+$("#download_button").on("click", exportPDF);
