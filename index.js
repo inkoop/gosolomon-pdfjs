@@ -2,29 +2,30 @@ const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/maste
 let pdfDoc = null,
     eventsJSON = null,
     pageNum = 1,
-    pageIsRendering = false,
-    pageNumIsPending = null;
+    currentPage = 1,
     totalPages = null,
-    canvas = $('#canvas')[0],
-    textLayer = $("#text_layer");
+    perPageHeight = null;
 
 showPDF(url);
 
 // Render the page
 const renderPage = page => {
-  pageIsRendering = true;
-  $('#page_number').text(pageNum);
-  var scale = 1.5;
-  var viewport = page.getViewport(scale);
-  var context = canvas.getContext('2d');
+  let scale = 1.5;
+  let viewport = page.getViewport(scale);
+  let canvas = $("<canvas>")[0];
+  canvas.id = "canvas_" + currentPage;
+  let context = canvas.getContext('2d');
   canvas.height = viewport.height;
   canvas.width = viewport.width;
   //Draw it on the canvas
   page.render({ canvasContext: context, viewport: viewport });
 
-  var canvasOffset = $(canvas).offset();
+  $("#wrapper").append(canvas);
+
+  let canvasOffset = $(canvas).offset();
+  let textLayer = $("<text_layer>")
   $(textLayer).addClass("textLayer");
-  var textLayerDiv = $(textLayer).css({
+  let textLayerDiv = $(textLayer).css({
     height : viewport.height+'px',
     width : viewport.width+'px',
     top : canvasOffset.top - 94,
@@ -32,23 +33,23 @@ const renderPage = page => {
   });
 
   page.getTextContent().then(function(textContent){
-    var textLayer = new TextLayerBuilder({
+    let textLayer = new TextLayerBuilder({
       textLayerDiv : textLayerDiv.get(0),
       pageIndex : pageNum - 1,
       viewport : viewport
     });
     textLayer.setTextContent(textContent);
     textLayer.render();
-    pageIsRendering = false;
   });
-};
 
-// Check for pages rendering
-const queueRenderPage = num => {
-  if(pageIsRendering) {
-    pageNumIsPending = num;
+  $("#wrapper").append(textLayer);
+
+  currentPage++;
+  if (currentPage <= totalPages) {
+    thePDF.getPage( currentPage ).then( renderPage );
   } else {
-    thePDF.getPage( pageNum ).then( renderPage );
+    $("#wrapper").removeClass("hidden");
+    perPageHeight = $( "canvas" ).height();
   }
 };
 
@@ -58,18 +59,24 @@ const showPreviousPage = () => {
     return;
   }
   pageNum--;
-  queueRenderPage(pageNum);
+  updatePageNumber();
   updateEvents("previous_page");
 }
 
 // Show next page
 const showNextPage = () => {
-  if(pageNum >= thePDF.numPages) {
+  if(pageNum >= totalPages) {
     return;
   }
   pageNum++;
-  queueRenderPage(pageNum);
+  updatePageNumber();
   updateEvents("next_page");
+}
+
+const updatePageNumber = () => {
+  let topOfPage = $("#canvas_" + pageNum).offset().top;
+  $("#page_number").text(pageNum);
+  $(window).scrollTop(topOfPage);
 }
 
 // Get the Document and load the PDF
@@ -78,8 +85,8 @@ function showPDF(pdf_url) {
     // Set PDFJS global object (so we can easily access in our page functions
     thePDF = pdf;
     // How many pages it has
-    numPages = pdf.numPages;
-    $('#total_page_count').text(pdf.numPages);
+    totalPages = pdf.numPages;
+    $('#total_page_count').text(totalPages);
     createJSON();
     // Render first page
     pdf.getPage( 1 ).then( renderPage );
@@ -130,6 +137,21 @@ function createJSON() {
   eventsJSON.events = [];
   updateEvents("load");
 }
+
+let lastScrollTop = 0;
+$(window).scroll(function (event) {
+  let scrollTop = $(window).scrollTop();
+  let calculatedPageNum = Math.ceil(( scrollTop + (perPageHeight / 3) ) / perPageHeight);
+  if (pageNum != calculatedPageNum) {
+    pageNum = calculatedPageNum;
+    $("#page_number").text(pageNum);
+    if (scrollTop > lastScrollTop) {
+      updateEvents("next_page");
+    } else {
+      updateEvents("previous_page");
+    }
+  };
+});
 
 // Button event previous and next page
 $("#previous_page").on("click", showPreviousPage);

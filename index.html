@@ -11,15 +11,12 @@
   <body>
     <div id="top_bar">
       <button class="btn" id="previous_page">Prev Page</button>
-      <span class="page_info">Page <span id="page_number"></span> of <span id="total_page_count"></span></span>
+      <span class="page_info">Page <span id="page_number">1</span> of <span id="total_page_count"></span></span>
       <button class="btn" id="next_page">Next Page</button>
       <input type="hidden" id="timestampdata"/>
       <button id="download_button">Download</button>
     </div>
-    <div id="wrapper">
-      <canvas id="canvas" style="border:1px solid black;"></canvas>
-      <div id="text_layer" class="textLayer"></div>
-    </div>
+    <div id="wrapper" class="hidden"></div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script src="ui_utils.js"></script>
     <script type="text/javascript" src="text_layer_builder.js"></script>
