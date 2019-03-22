@@ -14,31 +14,7 @@
   z-index: 10;
 }
 
-#previous_page{
-  background: #000;
-  color: #fff;
-  border : none;
-  outline: none;
-  cursor: pointer;
-  padding: 0.5rem 2rem;
-  margin-left: 30px;
-  margin-left: 30px;
-  display: inline;
-}
-
-#next_page{
-  background: #000;
-  color: #fff;
-  border : none;
-  outline: none;
-  cursor: pointer;
-  padding: 0.5rem 2rem;
-  margin-left: 30px;
-  margin-left: 30px;
-  display: inline;
-}
-
-#download_button {
+.btn {
   background: #000;
   color: #fff;
   border : none;

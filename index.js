@@ -1,17 +1,20 @@
 const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample.pdf";
+const maxZoom = 4;
+const minZoom = 1;
+
 let pdfDoc = null,
     eventsJSON = null,
     pageNum = 1,
     currentPage = 1,
     totalPages = null,
-    perPageHeight = null;
+    perPageHeight = null,
+    zoomLevel = 1.5;
 
 showPDF(url);
 
 // Render the page
 const renderPage = page => {
-  let scale = 1.5;
-  let viewport = page.getViewport(scale);
+  let viewport = page.getViewport(zoomLevel);
   let canvas = $("<canvas>")[0];
   canvas.id = "canvas_" + currentPage;
   let context = canvas.getContext('2d');
@@ -97,6 +100,12 @@ function showPDF(pdf_url) {
   });
 }
 
+function zoom() {
+  currentPage = 1;
+  $("#wrapper").empty();
+  thePDF.getPage( 1 ).then( renderPage );
+}
+
 // Download page
 function exportPDF() { 
   let mime_types = [ 'application/pdf' ];
@@ -116,6 +125,10 @@ function updateEvents(event) {
   object.timeStamp = now_utc;
   if (event == "download") {
     object.download = "done";
+  } else if (event == "zoomed_in") {
+    object.zoomed_in = "done";
+  } else if (event == "zoomed_out") {
+    object.zoomed_out = "done";
   } else {
     object.page = pageNum;
   }
@@ -153,8 +166,27 @@ $(window).scroll(function (event) {
   };
 });
 
-// Button event previous and next page
+// Button for previous and next page events
 $("#previous_page").on("click", showPreviousPage);
 $("#next_page").on("click", showNextPage);
-// Button event download
+// Button for download event
 $("#download_button").on("click", exportPDF);
+// Button for zoom events
+$("#zoom_in").on("click", function() {
+  zoomLevel += 0.5;
+  if (zoomLevel == maxZoom)
+    $(this).hide();
+  if (zoomLevel > minZoom)
+    $("#zoom_out").show();
+  updateEvents("zoomed_in");
+  zoom();
+});
+$("#zoom_out").on("click", function() {
+  zoomLevel -= 0.5;
+  if (zoomLevel == minZoom)
+    $(this).hide();
+  if (zoomLevel < maxZoom)
+    $("#zoom_in").show();
+  updateEvents("zoomed_out");
+  zoom();
+});
