@@ -29,12 +29,12 @@ const renderPage = page => {
   jQuery("#wrapper").append(canvas_wrapper);
 
   let canvasOffset = jQuery(canvas).offset();
-  let textLayer = jQuery("<text_layer>")
+  let textLayer = jQuery("<text_layer>");
   jQuery(textLayer).addClass("textLayer");
   let textLayerDiv = jQuery(textLayer).css({
     height : viewport.height+'px',
     width : viewport.width+'px',
-    top : canvasOffset.top - 94,
+    top : canvasOffset.top - jQuery("#top_bar").outerHeight(),
     left : canvasOffset.left
   });
 
@@ -48,7 +48,51 @@ const renderPage = page => {
     textLayer.render();
   });
 
-  jQuery("#wrapper").append(textLayer);
+  let annotationsLayer = jQuery("<annotations_layer>");
+  console.log(page);
+  page.getAnnotations().then(function (annotationsData) {
+    console.log(annotationsData);
+
+    viewport = viewport.clone({
+      dontFlip: true
+    });
+
+    for (var i = 0; i < annotationsData.length; i++) {
+      var data = annotationsData[i];
+      var annotation = PDFJS.Annotation.fromData(data);
+      if (!annotation || !annotation.hasHtml()) {
+        continue;
+      }
+
+      var element = annotation.getHtmlElement(page.commonObjs);
+      data = annotation.getData();
+      var rect = data.rect;
+      var view = page.view;
+      rect = PDFJS.Util.normalizeRect([
+        rect[0],
+        view[3] - rect[1] + view[1],
+        rect[2],
+        view[3] - rect[3] + view[1]]);
+      element.style.left = (canvasOffset.left + rect[0]) + 'px';
+      element.style.top = (canvasOffset.top + rect[1]) + 'px';
+      element.style.position = 'absolute';
+
+      var transform = viewport.transform;
+      var transformStr = 'matrix(' + transform.join(',') + ')';
+      CustomStyle.setProp('transform', element, transformStr);
+      var transformOriginStr = -rect[0] + 'px ' + -rect[1] + 'px';
+      CustomStyle.setProp('transformOrigin', element, transformOriginStr);
+
+      if (data.subtype === 'Link' && !data.url) {
+        // In this example,  I do not handle the `Link` annotations without url.
+        // If you want to handle those annotations, see `web/page_view.js`.
+        continue;
+      }
+      annotationsLayer.append(element);
+    }
+  });
+
+  canvas_wrapper.append(textLayer);
 
   currentPage++;
   if (currentPage <= totalPages) {
@@ -105,9 +149,25 @@ function showPDF(pdf_url) {
 
 function zoom() {
   currentPage = 1;
+  localStorage.setItem("zoomLevel", zoomLevel);
   jQuery("#wrapper").empty();
   thePDF.getPage( 1 ).then( renderPage );
 }
+
+function setPreviousZoomLevel() {
+  if (localStorage.getItem("zoomLevel")) {
+    zoomLevel = parseFloat(localStorage.getItem("zoomLevel"));
+  }
+  if (localStorage.getItem("zoomLevelOption")) {
+    jQuery("#scaleSelect").val(localStorage.getItem("zoomLevelOption"));
+  }
+}
+
+function setCurrentZoomLevelOption(zoomLevelOption) {
+  localStorage.setItem("zoomLevelOption", zoomLevelOption);
+}
+
+setPreviousZoomLevel();
 
 // Download page
 function exportPDF() { 
@@ -195,6 +255,7 @@ jQuery("#zoom_out").on("click", function() {
 });
 jQuery("#scaleSelect").on('change', function() {
   let zoomValue = jQuery(this).val();
+  setCurrentZoomLevelOption(zoomValue);
   switch(zoomValue) {
     case "page-actual":
       zoomLevel = 1;
@@ -211,5 +272,5 @@ jQuery("#scaleSelect").on('change', function() {
       zoomLevel = parseFloat(zoomValue);
   }
   updateEvents("zoomed_out");
-  zoom();  
+  zoom();
 });
