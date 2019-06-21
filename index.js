@@ -1,5 +1,6 @@
-// const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample.pdf";
-const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample-link_1.pdf";
+const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample.pdf";
+// const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample-link_1.pdf";
+
 const maxZoom = 4;
 const minZoom = 1;
 
@@ -50,47 +51,28 @@ const renderPage = page => {
   });
 
   let annotationsLayer = jQuery("<annotations_layer>");
-  console.log(page);
+
+  canvas_wrapper.append(annotationsLayer);
   page.getAnnotations().then(function (annotationsData) {
-    console.log(annotationsData);
+    // // Canvas offset
+    // var canvas_offset = $(canvas).offset();
 
-    viewport = viewport.clone({
-      dontFlip: true
-    });
+    // // Canvas height
+    // var canvas_height = $(canvas).get(0).height;
 
-    for (var i = 0; i < annotationsData.length; i++) {
-      var data = annotationsData[i];
-      var annotation = PDFJS.Annotation.fromData(data);
-      if (!annotation || !annotation.hasHtml()) {
-        continue;
-      }
+    // // Canvas width
+    // var canvas_width = $(canvas).get(0).width;
 
-      var element = annotation.getHtmlElement(page.commonObjs);
-      data = annotation.getData();
-      var rect = data.rect;
-      var view = page.view;
-      rect = PDFJS.Util.normalizeRect([
-        rect[0],
-        view[3] - rect[1] + view[1],
-        rect[2],
-        view[3] - rect[3] + view[1]]);
-      element.style.left = (canvasOffset.left + rect[0]) + 'px';
-      element.style.top = (canvasOffset.top + rect[1]) + 'px';
-      element.style.position = 'absolute';
+    // // CSS for annotation layer
+    // annotationsLayer.css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas_height + 'px', width: canvas_width + 'px' });
 
-      var transform = viewport.transform;
-      var transformStr = 'matrix(' + transform.join(',') + ')';
-      CustomStyle.setProp('transform', element, transformStr);
-      var transformOriginStr = -rect[0] + 'px ' + -rect[1] + 'px';
-      CustomStyle.setProp('transformOrigin', element, transformOriginStr);
-
-      if (data.subtype === 'Link' && !data.url) {
-        // In this example,  I do not handle the `Link` annotations without url.
-        // If you want to handle those annotations, see `web/page_view.js`.
-        continue;
-      }
-      annotationsLayer.append(element);
-    }
+    // // Render the annotation layer
+    // pdfjsLib.AnnotationLayer.render({
+    //   viewport: viewport.clone({ dontFlip: true }),
+    //   div: annotationsLayer.get(0),
+    //   annotations: annotationsData,
+    //   page: page
+    // });
   });
 
   canvas_wrapper.append(textLayer);
@@ -150,22 +132,28 @@ function showPDF(pdf_url) {
 
 function zoom() {
   currentPage = 1;
-  localStorage.setItem("zoomLevel", zoomLevel);
+  try {
+    localStorage.setItem("zoomLevel", zoomLevel);
+  } catch {}
   jQuery("#wrapper").empty();
   thePDF.getPage( 1 ).then( renderPage );
 }
 
 function setPreviousZoomLevel() {
-  if (localStorage.getItem("zoomLevel")) {
-    zoomLevel = parseFloat(localStorage.getItem("zoomLevel"));
-  }
-  if (localStorage.getItem("zoomLevelOption")) {
-    jQuery("#scaleSelect").val(localStorage.getItem("zoomLevelOption"));
-  }
+  try {
+    if (localStorage.getItem("zoomLevel")) {
+      zoomLevel = parseFloat(localStorage.getItem("zoomLevel"));
+    }
+    if (localStorage.getItem("zoomLevelOption")) {
+      jQuery("#scaleSelect").val(localStorage.getItem("zoomLevelOption"));
+    }
+  } catch {}
 }
 
 function setCurrentZoomLevelOption(zoomLevelOption) {
-  localStorage.setItem("zoomLevelOption", zoomLevelOption);
+  try {
+    localStorage.setItem("zoomLevelOption", zoomLevelOption);
+  } catch {}
 }
 
 setPreviousZoomLevel();
