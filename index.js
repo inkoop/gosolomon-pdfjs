@@ -2,7 +2,7 @@ const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/maste
 const maxZoom = 4;
 const minZoom = 1;
 
-let pdfDoc = null,
+let viewport = null,
     eventsJSON = null,
     pageNum = 1,
     currentPage = 1,
@@ -14,8 +14,8 @@ showPDF(url);
 
 // Render the page
 const renderPage = page => {
-  let viewport = page.getViewport(zoomLevel);
-  let canvas = $("<canvas>")[0];
+  viewport = page.getViewport(zoomLevel);
+  let canvas = jQuery("<canvas>")[0];
   canvas.id = "canvas_" + currentPage;
   let context = canvas.getContext('2d');
   canvas.height = viewport.height;
@@ -23,12 +23,15 @@ const renderPage = page => {
   //Draw it on the canvas
   page.render({ canvasContext: context, viewport: viewport });
 
-  $("#wrapper").append(canvas);
+  let canvas_wrapper = jQuery("<div>");
+  canvas_wrapper.html(canvas);
 
-  let canvasOffset = $(canvas).offset();
-  let textLayer = $("<text_layer>")
-  $(textLayer).addClass("textLayer");
-  let textLayerDiv = $(textLayer).css({
+  jQuery("#wrapper").append(canvas_wrapper);
+
+  let canvasOffset = jQuery(canvas).offset();
+  let textLayer = jQuery("<text_layer>")
+  jQuery(textLayer).addClass("textLayer");
+  let textLayerDiv = jQuery(textLayer).css({
     height : viewport.height+'px',
     width : viewport.width+'px',
     top : canvasOffset.top - 94,
@@ -45,14 +48,14 @@ const renderPage = page => {
     textLayer.render();
   });
 
-  $("#wrapper").append(textLayer);
+  jQuery("#wrapper").append(textLayer);
 
   currentPage++;
   if (currentPage <= totalPages) {
     thePDF.getPage( currentPage ).then( renderPage );
   } else {
-    $("#wrapper").removeClass("hidden");
-    perPageHeight = $( "canvas" ).height();
+    jQuery("#wrapper").removeClass("hidden");
+    perPageHeight = jQuery( "canvas" ).height();
   }
 };
 
@@ -77,9 +80,9 @@ const showNextPage = () => {
 }
 
 const updatePageNumber = () => {
-  let topOfPage = $("#canvas_" + pageNum).offset().top;
-  $("#page_number").text(pageNum);
-  $(window).scrollTop(topOfPage);
+  let topOfPage = jQuery("#canvas_" + pageNum).offset().top;
+  jQuery("#page_number").text(pageNum);
+  jQuery(window).scrollTop(topOfPage);
 }
 
 // Get the Document and load the PDF
@@ -89,7 +92,7 @@ function showPDF(pdf_url) {
     thePDF = pdf;
     // How many pages it has
     totalPages = pdf.numPages;
-    $('#total_page_count').text(totalPages);
+    jQuery('#total_page_count').text(totalPages);
     createJSON();
     // Render first page
     pdf.getPage( 1 ).then( renderPage );
@@ -102,14 +105,14 @@ function showPDF(pdf_url) {
 
 function zoom() {
   currentPage = 1;
-  $("#wrapper").empty();
+  jQuery("#wrapper").empty();
   thePDF.getPage( 1 ).then( renderPage );
 }
 
 // Download page
 function exportPDF() { 
   let mime_types = [ 'application/pdf' ];
-  let download_link = $('<a>')[0];
+  let download_link = jQuery('<a>')[0];
   if ('download' in download_link) {
     download_link.download = "test.pdf";
   }
@@ -152,12 +155,12 @@ function createJSON() {
 }
 
 let lastScrollTop = 0;
-$(window).scroll(function (event) {
-  let scrollTop = $(window).scrollTop();
+jQuery(window).scroll(function (event) {
+  let scrollTop = jQuery(window).scrollTop();
   let calculatedPageNum = Math.ceil(( scrollTop + (perPageHeight / 3) ) / perPageHeight);
   if (pageNum != calculatedPageNum) {
     pageNum = calculatedPageNum;
-    $("#page_number").text(pageNum);
+    jQuery("#page_number").text(pageNum);
     if (scrollTop > lastScrollTop) {
       updateEvents("next_page");
     } else {
@@ -167,26 +170,47 @@ $(window).scroll(function (event) {
 });
 
 // Button for previous and next page events
-$("#previous_page").on("click", showPreviousPage);
-$("#next_page").on("click", showNextPage);
+jQuery("#previous_page").on("click", showPreviousPage);
+jQuery("#next_page").on("click", showNextPage);
 // Button for download event
-$("#download_button").on("click", exportPDF);
+jQuery("#download_button").on("click", exportPDF);
 // Button for zoom events
-$("#zoom_in").on("click", function() {
+jQuery("#zoom_in").on("click", function() {
   zoomLevel += 0.5;
   if (zoomLevel == maxZoom)
-    $(this).hide();
+    jQuery(this).hide();
   if (zoomLevel > minZoom)
-    $("#zoom_out").show();
+    jQuery("#zoom_out").show();
   updateEvents("zoomed_in");
   zoom();
 });
-$("#zoom_out").on("click", function() {
+jQuery("#zoom_out").on("click", function() {
   zoomLevel -= 0.5;
   if (zoomLevel == minZoom)
-    $(this).hide();
+    jQuery(this).hide();
   if (zoomLevel < maxZoom)
-    $("#zoom_in").show();
+    jQuery("#zoom_in").show();
   updateEvents("zoomed_out");
   zoom();
+});
+jQuery("#scaleSelect").on('change', function() {
+  let zoomValue = jQuery(this).val();
+  console.log(zoomValue);
+  switch(zoomValue) {
+    case "page-actual":
+      zoomLevel = 1;
+      break;
+    case "page-fit":
+      let window_height = jQuery(window).height() - 94;
+      zoomLevel = (window_height * zoomLevel ) / viewport.height;
+      break;
+    case "page-width":
+      let window_width = jQuery(window).width();
+      zoomLevel = (window_width * zoomLevel ) / viewport.width;
+      break;
+    default:
+      zoomLevel = parseFloat(zoomValue);
+  }
+  updateEvents("zoomed_out");
+  zoom();  
 });
