@@ -1,4 +1,5 @@
-const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample.pdf";
+// const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample.pdf";
+const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample-link_1.pdf";
 const maxZoom = 4;
 const minZoom = 1;
 
