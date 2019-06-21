@@ -195,13 +195,12 @@ jQuery("#zoom_out").on("click", function() {
 });
 jQuery("#scaleSelect").on('change', function() {
   let zoomValue = jQuery(this).val();
-  console.log(zoomValue);
   switch(zoomValue) {
     case "page-actual":
       zoomLevel = 1;
       break;
     case "page-fit":
-      let window_height = jQuery(window).height() - 94;
+      let window_height = jQuery(window).height() - jQuery("#top_bar").outerHeight();
       zoomLevel = (window_height * zoomLevel ) / viewport.height;
       break;
     case "page-width":
