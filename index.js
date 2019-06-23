@@ -1,5 +1,5 @@
-const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample.pdf";
-// const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample-link_1.pdf";
+// const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample.pdf";
+const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/pdf_with_link.pdf";
 
 const maxZoom = 4;
 const minZoom = 1;
@@ -23,7 +23,32 @@ const renderPage = page => {
   canvas.height = viewport.height;
   canvas.width = viewport.width;
   //Draw it on the canvas
-  page.render({ canvasContext: context, viewport: viewport });
+  page.render({ canvasContext: context, viewport: viewport }).then(function() {
+    let annotationsLayer = jQuery("<div>");
+
+    canvas_wrapper.append(annotationsLayer);
+    page.getAnnotations().then(function (annotationsData) {
+      // Canvas offset
+      var canvas_offset = jQuery(canvas).offset();
+
+      // Canvas height
+      var canvas_height = jQuery(canvas).get(0).height;
+
+      // Canvas width
+      var canvas_width = jQuery(canvas).get(0).width;
+
+      // CSS for annotation layer
+      annotationsLayer.css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas_height + 'px', width: canvas_width + 'px' });
+
+      // Render the annotation layer
+      pdfjsLib.AnnotationLayer.render({
+        viewport: viewport.clone({ dontFlip: true }),
+        div: annotationsLayer.get(0),
+        annotations: annotationsData,
+        page: page
+      });
+    });
+  });
 
   let canvas_wrapper = jQuery("<div>");
   canvas_wrapper.html(canvas);
@@ -48,31 +73,6 @@ const renderPage = page => {
     });
     textLayer.setTextContent(textContent);
     textLayer.render();
-  });
-
-  let annotationsLayer = jQuery("<annotations_layer>");
-
-  canvas_wrapper.append(annotationsLayer);
-  page.getAnnotations().then(function (annotationsData) {
-    // // Canvas offset
-    // var canvas_offset = $(canvas).offset();
-
-    // // Canvas height
-    // var canvas_height = $(canvas).get(0).height;
-
-    // // Canvas width
-    // var canvas_width = $(canvas).get(0).width;
-
-    // // CSS for annotation layer
-    // annotationsLayer.css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas_height + 'px', width: canvas_width + 'px' });
-
-    // // Render the annotation layer
-    // pdfjsLib.AnnotationLayer.render({
-    //   viewport: viewport.clone({ dontFlip: true }),
-    //   div: annotationsLayer.get(0),
-    //   annotations: annotationsData,
-    //   page: page
-    // });
   });
 
   canvas_wrapper.append(textLayer);
