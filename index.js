@@ -5,12 +5,12 @@ const maxZoom = 4;
 const minZoom = 1;
 
 let viewport = null,
-    eventsJSON = null,
-    pageNum = 1,
-    currentPage = 1,
-    totalPages = null,
-    perPageHeight = null,
-    zoomLevel = 1.5;
+eventsJSON = null,
+pageNum = 1,
+currentPage = 1,
+totalPages = null,
+perPageHeight = null,
+zoomLevel = 1.5;
 
 showPDF(url);
 
@@ -22,66 +22,55 @@ const renderPage = page => {
   let context = canvas.getContext('2d');
   canvas.height = viewport.height;
   canvas.width = viewport.width;
+
+  let canvas_wrapper = jQuery("<div class='canvas-wrapper'>");
+  canvas_wrapper.html(canvas);
+
+  jQuery("#content").append(canvas_wrapper);
   //Draw it on the canvas
   page.render({ canvasContext: context, viewport: viewport }).then(function() {
-    let annotationsLayer = jQuery("<div>");
+    // Canvas offset
+    var canvas_offset = jQuery(canvas).offset();
 
-    canvas_wrapper.append(annotationsLayer);
+    // Canvas height
+    var canvas_height = jQuery(canvas).get(0).height;
+
+    // Canvas width
+    var canvas_width = jQuery(canvas).get(0).width;
+    let textLayer = jQuery("<text_layer class='text-layer'>");
+    canvas_wrapper.append(textLayer);
+
+    page.getTextContent().then(function(textContent){
+      textLayer.css({
+        left: canvas_offset.left + 'px',
+        height: canvas_height + 'px',
+        width: canvas_width + 'px'
+      });
+
+      PDFJS.renderTextLayer({
+        textContent: textContent,
+        container: textLayer.get(0),
+        viewport: viewport,
+        textDivs: []
+      });
+    });
+
     page.getAnnotations().then(function (annotationsData) {
-      // Canvas offset
-      var canvas_offset = jQuery(canvas).offset();
-
-      // Canvas height
-      var canvas_height = jQuery(canvas).get(0).height;
-
-      // Canvas width
-      var canvas_width = jQuery(canvas).get(0).width;
-
-      // CSS for annotation layer
-      annotationsLayer.css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas_height + 'px', width: canvas_width + 'px' });
-
       // Render the annotation layer
-      pdfjsLib.AnnotationLayer.render({
+      PDFJS.AnnotationLayer.render({
         viewport: viewport.clone({ dontFlip: true }),
-        div: annotationsLayer.get(0),
+        div: textLayer.get(0),
         annotations: annotationsData,
         page: page
       });
     });
   });
 
-  let canvas_wrapper = jQuery("<div>");
-  canvas_wrapper.html(canvas);
-
-  jQuery("#wrapper").append(canvas_wrapper);
-
-  let canvasOffset = jQuery(canvas).offset();
-  let textLayer = jQuery("<text_layer>");
-  jQuery(textLayer).addClass("textLayer");
-  let textLayerDiv = jQuery(textLayer).css({
-    height : viewport.height+'px',
-    width : viewport.width+'px',
-    top : canvasOffset.top - jQuery("#top_bar").outerHeight(),
-    left : canvasOffset.left
-  });
-
-  page.getTextContent().then(function(textContent){
-    let textLayer = new TextLayerBuilder({
-      textLayerDiv : textLayerDiv.get(0),
-      pageIndex : pageNum - 1,
-      viewport : viewport
-    });
-    textLayer.setTextContent(textContent);
-    textLayer.render();
-  });
-
-  canvas_wrapper.append(textLayer);
-
   currentPage++;
   if (currentPage <= totalPages) {
     thePDF.getPage( currentPage ).then( renderPage );
   } else {
-    jQuery("#wrapper").removeClass("hidden");
+    jQuery("#content").removeClass("hidden");
     perPageHeight = jQuery( "canvas" ).height();
   }
 };
@@ -114,7 +103,7 @@ const updatePageNumber = () => {
 
 // Get the Document and load the PDF
 function showPDF(pdf_url) {
-  pdfjsLib.getDocument(url).then(function(pdf) {
+  PDFJS.getDocument(url).then(function(pdf) {
     // Set PDFJS global object (so we can easily access in our page functions
     thePDF = pdf;
     // How many pages it has
@@ -135,7 +124,7 @@ function zoom() {
   try {
     localStorage.setItem("zoomLevel", zoomLevel);
   } catch {}
-  jQuery("#wrapper").empty();
+  jQuery("#content").empty();
   thePDF.getPage( 1 ).then( renderPage );
 }
 
