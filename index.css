@@ -44,6 +44,8 @@
   top: 94px;
   position: relative;
   text-align: center;
+  overflow: auto;
+  height: calc(100vh - 94px);
 }
 
 .text-layer { 

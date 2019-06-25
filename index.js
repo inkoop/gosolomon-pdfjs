@@ -28,6 +28,13 @@ const renderPage = page => {
   let canvas_wrapper = jQuery("<div class='canvas-wrapper'>");
   canvas_wrapper.html(canvas);
 
+  page.viewport = viewport;
+  page.div = canvas_wrapper.get(0);
+  page.width = canvas.width;
+  page.height = canvas.height;
+  page.scale = zoomLevel;
+  viewer._pages.push(page);
+
   jQuery("#content").append(canvas_wrapper);
   //Draw it on the canvas
   page.render({ canvasContext: context, viewport: viewport }).then(function() {
@@ -61,7 +68,6 @@ const renderPage = page => {
     });
 
     page.getAnnotations().then(function (annotationsData) {
-      console.log(annotationsData);
       // Render the annotation layer
       pdfjsLib.AnnotationLayer.render({
         viewport: viewport.clone({ dontFlip: true }),
@@ -123,6 +129,8 @@ function showPDF(pdf_url) {
       container: jQuery("#content").get(0),
       linkService: linkService
     });
+    viewer.setDocument(thePDF);
+    viewer._pages = [];
     // viewer.setDocument(thePDF);
     linkService.setViewer(viewer);
     // How many pages it has

@@ -56,8 +56,6 @@ function () {
         var destRef = explicitDest[0],
             pageNumber;
 
-        console.log(explicitDest);
-
         if (destRef instanceof Object) {
           pageNumber = _this._cachedPageNumber(destRef);
 

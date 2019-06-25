@@ -114,43 +114,47 @@ function getOutputScale(ctx) {
  * @param {boolean} skipOverflowHiddenElements - Ignore elements that have  
  *   the CSS rule `overflow: hidden;` set. The default is false.  
  */ 
-function scrollIntoView(element, spot, skipOverflowHiddenElements = false) {  
-  // Assuming offsetParent is available (it's not available when viewer is in 
-  // hidden iframe or object). We have to scroll: if the offsetParent is not set  
-  // producing the error. See also animationStarted.  
-  let parent = element.offsetParent;  
-  if (!parent) {  
-    console.error('offsetParent is not set -- cannot scroll');  
-    return; 
-  } 
-  let offsetY = element.offsetTop + element.clientTop;  
-  let offsetX = element.offsetLeft + element.clientLeft;  
-  while ((parent.clientHeight === parent.scrollHeight &&  
-          parent.clientWidth === parent.scrollWidth) || 
-         (skipOverflowHiddenElements && 
-          getComputedStyle(parent).overflow === 'hidden')) {  
-    if (parent.dataset._scaleY) { 
-      offsetY /= parent.dataset._scaleY;  
-      offsetX /= parent.dataset._scaleX;  
-    } 
-    offsetY += parent.offsetTop;  
-    offsetX += parent.offsetLeft; 
-    parent = parent.offsetParent; 
-    if (!parent) {  
-      return; // no need to scroll  
-    } 
-  } 
-  if (spot) { 
-    if (spot.top !== undefined) { 
-      offsetY += spot.top;  
-    } 
-    if (spot.left !== undefined) {  
-      offsetX += spot.left; 
-      parent.scrollLeft = offsetX;  
-    } 
-  } 
-  parent.scrollTop = offsetY; 
-} 
+function scrollIntoView(element, spot) {
+  var skipOverflowHiddenElements = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+  var parent = element.offsetParent;
+
+
+  if (!parent) {
+    console.error('offsetParent is not set -- cannot scroll');
+    return;
+  }
+
+  var offsetY = element.offsetTop + element.clientTop;
+  var offsetX = element.offsetLeft + element.clientLeft;
+
+  while (parent.clientHeight === parent.scrollHeight && parent.clientWidth === parent.scrollWidth || skipOverflowHiddenElements && getComputedStyle(parent).overflow === 'hidden') {
+    if (parent.dataset._scaleY) {
+      offsetY /= parent.dataset._scaleY;
+      offsetX /= parent.dataset._scaleX;
+    }
+
+    offsetY += parent.offsetTop;
+    offsetX += parent.offsetLeft;
+    parent = parent.offsetParent;
+
+    if (!parent) {
+      return;
+    }
+  }
+
+  // if (spot) {
+  //   if (spot.top !== undefined) {
+  //     offsetY += spot.top;
+  //   }
+
+  //   if (spot.left !== undefined) {
+  //     offsetX += spot.left;
+  //     parent.scrollLeft = offsetX;
+  //   }
+  // }
+
+  parent.scrollTop = offsetY;
+}
 
  /**  
  * Helper function to start monitoring the scroll event and converting them into  
