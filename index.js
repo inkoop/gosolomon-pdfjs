@@ -1,5 +1,5 @@
 // const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/sample.pdf";
-const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/pdf_with_link.pdf";
+const url = "https://raw.githubusercontent.com/kevivmatrix/gosolomon-pdfjs/master/Office-M365-BeyondTheGDPR.pdf";
 
 const maxZoom = 4;
 const minZoom = 1;
@@ -10,7 +10,9 @@ pageNum = 1,
 currentPage = 1,
 totalPages = null,
 perPageHeight = null,
-zoomLevel = 1.5;
+zoomLevel = 1.5,
+linkService,
+viewer;
 
 showPDF(url);
 
@@ -37,7 +39,7 @@ const renderPage = page => {
 
     // Canvas width
     var canvas_width = jQuery(canvas).get(0).width;
-    let textLayer = jQuery("<text_layer class='text-layer'>");
+    let textLayer = jQuery("<div class='text-layer'>");
     canvas_wrapper.append(textLayer);
 
     page.getTextContent().then(function(textContent){
@@ -47,21 +49,26 @@ const renderPage = page => {
         width: canvas_width + 'px'
       });
 
-      PDFJS.renderTextLayer({
-        textContent: textContent,
-        container: textLayer.get(0),
-        viewport: viewport,
-        textDivs: []
+      page.getTextContent().then(function(textContent){
+        let textLayerContent = new TextLayerBuilder({
+          textLayerDiv : textLayer.get(0),
+          pageIndex : pageNum - 1,
+          viewport : viewport
+        });
+        textLayerContent.setTextContent(textContent);
+        textLayerContent.render();
       });
     });
 
     page.getAnnotations().then(function (annotationsData) {
+      console.log(annotationsData);
       // Render the annotation layer
-      PDFJS.AnnotationLayer.render({
+      pdfjsLib.AnnotationLayer.render({
         viewport: viewport.clone({ dontFlip: true }),
         div: textLayer.get(0),
         annotations: annotationsData,
-        page: page
+        page: page,
+        linkService: linkService
       });
     });
   });
@@ -103,9 +110,21 @@ const updatePageNumber = () => {
 
 // Get the Document and load the PDF
 function showPDF(pdf_url) {
-  PDFJS.getDocument(url).then(function(pdf) {
-    // Set PDFJS global object (so we can easily access in our page functions
+  pdfjsLib.getDocument(url).then(function(pdf) {
+    // Set pdfjsLib global object (so we can easily access in our page functions
     thePDF = pdf;
+
+    linkService = new pdfjsLib.PDFLinkService();
+    linkService.externalLinkTarget = pdfjsLib.externalLinkTarget;
+    linkService.externalLinkRel = pdfjsLib.externalLinkRel;
+    linkService.setDocument(thePDF);
+
+    viewer = new pdfjsLib.PDFViewer({
+      container: jQuery("#content").get(0),
+      linkService: linkService
+    });
+    // viewer.setDocument(thePDF);
+    linkService.setViewer(viewer);
     // How many pages it has
     totalPages = pdf.numPages;
     jQuery('#total_page_count').text(totalPages);
