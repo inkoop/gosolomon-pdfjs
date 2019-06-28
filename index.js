@@ -20,12 +20,12 @@ showPDF(url);
 const renderPage = page => {
   viewport = page.getViewport(zoomLevel);
   let canvas = jQuery("<canvas>")[0];
-  canvas.id = "canvas_" + currentPage;
   let context = canvas.getContext('2d');
   canvas.height = viewport.height;
   canvas.width = viewport.width;
 
   let canvas_wrapper = jQuery("<div class='canvas-wrapper'>");
+  canvas_wrapper[0].id = "canvas_" + currentPage;
   canvas_wrapper.html(canvas);
 
   page.viewport = viewport;
@@ -84,7 +84,7 @@ const renderPage = page => {
     thePDF.getPage( currentPage ).then( renderPage );
   } else {
     jQuery("#content").removeClass("hidden");
-    perPageHeight = jQuery( "canvas" ).height();
+    perPageHeight = jQuery( ".canvas-wrapper" ).height();
   }
 };
 
@@ -109,7 +109,7 @@ const showNextPage = () => {
 }
 
 const updatePageNumber = () => {
-  let topOfPage = jQuery("#canvas_" + pageNum).offset().top;
+  let topOfPage = jQuery("#canvas_" + pageNum).offset().top - jQuery("#top_bar").outerHeight();
   jQuery("#page_number").text(pageNum);
   jQuery(window).scrollTop(topOfPage);
 }
@@ -220,7 +220,8 @@ function createJSON() {
 }
 
 let lastScrollTop = 0;
-jQuery(window).scroll(function (event) {
+
+function content_scroll(event) {
   let scrollTop = jQuery(window).scrollTop();
   let calculatedPageNum = Math.ceil(( scrollTop + (perPageHeight / 3) ) / perPageHeight);
   if (pageNum != calculatedPageNum) {
@@ -232,8 +233,9 @@ jQuery(window).scroll(function (event) {
       updateEvents("previous_page");
     }
   };
-});
+};
 
+jQuery(window).scroll(content_scroll);
 // Button for previous and next page events
 jQuery("#previous_page").on("click", showPreviousPage);
 jQuery("#next_page").on("click", showNextPage);
