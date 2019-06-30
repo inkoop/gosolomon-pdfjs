@@ -235,6 +235,25 @@ function content_scroll(event) {
   };
 };
 
+jQuery("body").on("click", ".internalLink", function(evt) {
+  var element = jQuery(this);
+  var canvas = element.closest('.canvas-wrapper');
+  var link = element.attr("href");
+  if (link == "") {
+    var allInternalLinksWithoutHref = canvas.find(".internalLink[href='']");
+    var canvasPageNumber = parseInt(canvas.attr("id").replace("canvas_", ""));
+    if (allInternalLinksWithoutHref[0] == element.get(0)) {
+      pageNum = canvasPageNumber + 1;
+      updatePageNumber();
+      updateEvents("next_page");
+    } else {
+      pageNum = canvasPageNumber - 1;
+      updatePageNumber();
+      updateEvents("previous_page");
+    }
+  }
+});
+
 jQuery(window).scroll(content_scroll);
 // Button for previous and next page events
 jQuery("#previous_page").on("click", showPreviousPage);
