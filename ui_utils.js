@@ -153,7 +153,7 @@ function scrollIntoView(element, spot) {
   //   }
   // }
 
-  parent.scrollTop = offsetY;
+  jQuery(window).scrollTop(offsetY);
 }
 
  /**  

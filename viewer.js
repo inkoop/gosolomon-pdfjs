@@ -484,7 +484,6 @@ function () {
       }
 
       var pageView = Number.isInteger(pageNumber) && this._pages[pageNumber - 1];
-      console.log(pageNumber);
 
       if (!pageView) {
         console.error("".concat(this._name, ".scrollPageIntoView: ") + "\"".concat(pageNumber, "\" is not a valid pageNumber parameter."));
